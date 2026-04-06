@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Study Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f4;
+    --bg3: #efede8;
+    --text: #1a1a1a;
+    --text2: #6b6b6b;
+    --text3: #9b9b9b;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --purple: #534AB7;
+    --purple-light: #EEEDFE;
+    --purple-mid: #AFA9EC;
+    --teal: #1D9E75;
+    --teal-light: #E1F5EE;
+    --teal-mid: #9FE1CB;
+    --amber: #BA7517;
+    --amber-light: #FAEEDA;
+    --coral: #D85A30;
+    --coral-light: #FAECE7;
+    --blue: #185FA5;
+    --blue-light: #E6F1FB;
+    --green: #3B6D11;
+    --green-light: #EAF3DE;
+    --red-light: #FCEBEB;
+    --red-border: #F09595;
+    --red-text: #791F1F;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e;
+      --bg2: #2c2c2e;
+      --bg3: #3a3a3c;
+      --text: #f0f0f0;
+      --text2: #a0a0a0;
+      --text3: #6b6b6b;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.2);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+  .container { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+  .topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.4rem; flex-wrap: wrap; gap: 10px; }
+  .page-title { font-size: 26px; font-weight: 600; color: var(--text); letter-spacing: -0.5px; }
+  .page-sub { font-size: 13px; color: var(--text2); margin-top: 3px; }
+  .btn { padding: 8px 16px; font-size: 13px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); cursor: pointer; font-family: inherit; transition: all .12s; }
+  .btn:hover { background: var(--bg2); }
+  .btn.pri { background: var(--purple); border-color: var(--purple); color: #fff; }
+  .btn.pri:hover { background: #3C3489; }
+  .btn.suc { background: var(--teal-light); border-color: var(--teal-mid); color: #085041; }
+  .btn.suc:hover { background: var(--teal-mid); }
+  .btn.sm { padding: 4px 10px; font-size: 12px; }
+  .btn.dng { background: var(--red-light); border-color: var(--red-border); color: var(--red-text); }
+  .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 1.2rem; }
+  .met { background: var(--bg); border-radius: var(--radius-lg); padding: 14px 15px; border: 0.5px solid var(--border); }
+  .met-l { font-size: 11px; color: var(--text3); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .6px; }
+  .met-v { font-size: 22px; font-weight: 600; color: var(--text); }
+  .met-s { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.1rem 1.2rem; margin-bottom: 12px; }
+  .ctitle { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 13px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 7px; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 12px; }
+  @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } .metrics { grid-template-columns: repeat(2, 1fr); } }
+  .inp { font-size: 13px; padding: 8px 10px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text); outline: none; width: 100%; font-family: inherit; transition: all .12s; }
+  .inp:focus { border-color: var(--purple); background: var(--bg); }
+  .addrow { display: flex; gap: 7px; margin-bottom: 10px; }
+  .addrow .inp { flex: 1; }
+  .addbtn { padding: 7px 13px; font-size: 13px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .addbtn:hover { background: var(--bg2); }
+  .titem { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 0.5px solid var(--border); }
+  .titem:last-child { border-bottom: none; }
+  .tcb { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--border2); cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+  .tcb.ck { background: var(--teal); border-color: var(--teal); }
+  .tcb.ck::after { content: ''; width: 9px; height: 5px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg); display: block; }
+  .ttxt { flex: 1; font-size: 13px; color: var(--text); cursor: pointer; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ttxt.dn { text-decoration: line-through; color: var(--text3); }
+  .tag { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 600; white-space: nowrap; flex-shrink: 0; letter-spacing: .2px; }
+  .tag-wird { background: var(--amber-light); color: #633806; }
+  .tag-pray { background: var(--teal-light); color: #085041; }
+  .tag-habit { background: var(--purple-light); color: #3C3489; }
+  .tag-daily { background: var(--blue-light); color: #0C447C; }
+  .tag-must { background: var(--coral-light); color: #712B13; }
+  .tdel { font-size: 16px; color: var(--text3); cursor: pointer; border: none; background: transparent; line-height: 1; padding: 0 3px; flex-shrink: 0; }
+  .tdel:hover { color: #E24B4A; }
+  .sec-nav { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 1.2rem; padding-bottom: 1.1rem; border-bottom: 0.5px solid var(--border); }
+  .snav { padding: 7px 16px; font-size: 13px; border: 0.5px solid transparent; border-radius: var(--radius); background: transparent; color: var(--text2); cursor: pointer; font-family: inherit; transition: all .12s; }
+  .snav.active { background: var(--purple-light); border-color: var(--purple-mid); color: #3C3489; font-weight: 600; }
+  .snav:hover:not(.active) { background: var(--bg2); border-color: var(--border2); }
+  .prog-bar { width: 100%; height: 5px; background: var(--bg2); border-radius: 3px; overflow: hidden; margin-top: 7px; }
+  .prog-fill { height: 100%; border-radius: 3px; transition: width .4s; }
+  .badge { font-size: 11px; padding: 3px 9px; border-radius: 20px; font-weight: 600; }
+  .bp { background: var(--purple-light); color: #3C3489; }
+  .bt { background: var(--teal-light); color: #085041; }
+  .ba { background: var(--amber-light); color: #633806; }
+  .bc { background: var(--blue-light); color: #0C447C; }
+  .br { background: var(--coral-light); color: #712B13; }
+  .timer-wrap { text-align: center; padding: 10px 0 6px; }
+  .timer-big { font-size: 46px; font-weight: 700; color: var(--text); letter-spacing: 2px; font-variant-numeric: tabular-nums; }
+  .timer-sub { font-size: 13px; color: var(--text2); margin-top: 3px; margin-bottom: 12px; }
+  .tbtns { display: flex; gap: 8px; justify-content: center; margin-bottom: 13px; }
+  .sdot { background: var(--purple-light); color: #3C3489; border-radius: 20px; padding: 3px 9px; font-size: 11px; font-weight: 600; }
+  .slog-row { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
+  .slog-row:last-child { margin-bottom: 0; }
+  .slog-day { font-size: 13px; color: var(--text2); min-width: 80px; }
+  .slog-inp { width: 58px; padding: 5px 8px; font-size: 13px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text); text-align: center; outline: none; font-family: inherit; }
+  .slog-bw { flex: 1; height: 8px; background: var(--bg2); border-radius: 4px; overflow: hidden; }
+  .slog-bf { height: 100%; border-radius: 4px; background: var(--purple); transition: width .3s; }
+  .slog-val { font-size: 12px; color: var(--text2); min-width: 32px; }
+  .subj-card { background: var(--bg2); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 9px; }
+  .subj-card:last-child { margin-bottom: 0; }
+  .exam-dot { width: 26px; height: 26px; border-radius: 6px; border: 0.5px solid var(--border2); cursor: pointer; display: flex; align-items: center; justify-content: center; background: var(--bg); flex-shrink: 0; transition: all .12s; }
+  .exam-dot.done-e { background: var(--teal); border-color: var(--teal); }
+  .exam-dot.done-e::after { content: ''; width: 9px; height: 5px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg); display: block; }
+  .mm-book { background: var(--bg2); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; }
+  .mm-book:last-child { margin-bottom: 0; }
+  .mm-chapter { display: flex; align-items: flex-start; gap: 9px; padding: 7px 0; border-bottom: 0.5px solid var(--border); }
+  .mm-chapter:last-child { border-bottom: none; }
+  .mm-cb { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border2); cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 2px; transition: all .12s; }
+  .mm-cb.ck { background: var(--purple); border-color: var(--purple); }
+  .mm-cb.ck::after { content: ''; width: 7px; height: 4px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg); display: block; }
+  .mm-tag { font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 600; }
+  .mm-tag-exam { background: var(--amber-light); color: #633806; }
+  .mm-tag-q { background: var(--blue-light); color: #0C447C; }
+  .mm-tag-done { background: var(--teal-light); color: #085041; }
+  .arch-item { background: var(--bg2); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; }
+  .arch-item:last-child { margin-bottom: 0; }
+  .arch-date { font-size: 12px; color: var(--text2); margin-bottom: 8px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
+  .arch-task { display: flex; align-items: center; gap: 7px; padding: 2px 0; font-size: 12px; color: var(--text); }
+  .arch-task.dn { text-decoration: line-through; color: var(--text3); }
+  .arch-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .arch-dot.y { background: var(--teal); }
+  .arch-dot.n { background: var(--border2); }
+  .habit-track-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
+  .habit-track-row:last-child { border-bottom: none; }
+  .ht-name { flex: 1; font-size: 13px; color: var(--text); min-width: 0; }
+  .ht-days { display: flex; gap: 4px; }
+  .ht-d { width: 24px; height: 24px; border-radius: 5px; border: 0.5px solid var(--border2); cursor: pointer; background: var(--bg2); transition: all .12s; }
+  .ht-d.on { background: var(--purple); border-color: var(--purple); }
+  .notice-bar { background: var(--teal-light); border: 0.5px solid var(--teal-mid); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 12px; font-size: 13px; color: #085041; display: flex; align-items: center; gap: 8px; }
+  .notice-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); flex-shrink: 0; }
+  .empty-state { font-size: 13px; color: var(--text3); text-align: center; padding: 16px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="topbar">
+    <div>
+      <div class="page-title">My Study Dashboard</div>
+      <div class="page-sub" id="dateSub"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn suc" onclick="saveToday()">Save Today</button>
+      <button class="btn pri" onclick="exportNotion()">Export to Notion ↗</button>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="met"><div class="met-l">Today's Study</div><div class="met-v" id="m-study">0h 0m</div><div class="met-s">from timer</div></div>
+    <div class="met"><div class="met-l">Weekly Hours</div><div class="met-v" id="m-week">0h</div><div class="met-s">this week</div></div>
+    <div class="met"><div class="met-l">Tasks Done</div><div class="met-v" id="m-tasks">0/0</div><div class="met-s">today</div></div>
+    <div class="met"><div class="met-l">Total Exams</div><div class="met-v" id="m-exams">0/0</div><div class="met-s">all subjects</div></div>
+  </div>
+
+  <div class="sec-nav">
+    <button class="snav active" onclick="showSec('today',this)">Today</button>
+    <button class="snav" onclick="showSec('recurring',this)">Daily Routines</button>
+    <button class="snav" onclick="showSec('weekly',this)">Weekly Stats</button>
+    <button class="snav" onclick="showSec('subjects',this)">Subjects</button>
+    <button class="snav" onclick="showSec('mindmap',this)">Book Maps</button>
+    <button class="snav" onclick="showSec('archive',this)">Archive</button>
+  </div>
+
+  <!-- TODAY -->
+  <div id="sec-today">
+    <div class="notice-bar"><div class="notice-dot"></div><span id="autoTasksNotice">Go to "Daily Routines" to set up tasks that appear here automatically every day.</span></div>
+    <div class="grid2">
+      <div>
+        <div class="card" style="margin-bottom:12px">
+          <div class="ctitle">Must-do today <span class="badge br" id="mustBadge">0 left</span></div>
+          <div class="addrow"><input class="inp" id="mustInp" placeholder="Add urgent task..." onkeydown="if(event.key==='Enter')addTask('must')"><button class="addbtn" onclick="addTask('must')">+</button></div>
+          <div id="mustList"></div>
+        </div>
+        <div class="card">
+          <div class="ctitle">Today's tasks <span class="badge bt" id="taskBadge">0 left</span></div>
+          <div class="addrow"><input class="inp" id="taskInp" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addTask('daily')"><button class="addbtn" onclick="addTask('daily')">+</button></div>
+          <div id="taskList"></div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:12px">
+          <div class="ctitle">Study Timer <span class="badge bp" id="sessBadge">Session 1</span></div>
+          <div class="timer-wrap">
+            <div class="timer-big" id="timerDisp">00:00:00</div>
+            <div class="timer-sub" id="timerStat">Ready to start</div>
+          </div>
+          <div class="tbtns">
+            <button class="btn pri" id="tStartBtn" onclick="toggleTimer()">Start</button>
+            <button class="btn dng" onclick="resetTimer()">Reset</button>
+          </div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap" id="sessDotsEl"></div>
+        </div>
+        <div class="card">
+          <div class="ctitle">Today's Focus</div>
+          <input class="inp" id="focusInp" placeholder="Your #1 goal today..." style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Daily Reflection</div>
+          <input class="inp" id="q1" placeholder="Biggest win today..." style="margin-bottom:8px">
+          <input class="inp" id="q2" placeholder="What to improve..." style="margin-bottom:8px">
+          <input class="inp" id="q3" placeholder="Tomorrow's goal...">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECURRING -->
+  <div id="sec-recurring" style="display:none">
+    <div class="card">
+      <div class="ctitle">Set up daily routines <span class="badge bp" id="recCount">0 items</span></div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:14px;padding:11px 13px;background:var(--bg2);border-radius:var(--radius);line-height:1.7">
+        Add anything here <strong>once</strong> — it will automatically appear in your daily tasks every day. Perfect for prayers, Quran, habits, and daily routines.
+      </div>
+      <div class="addrow">
+        <select id="recCatSel" class="inp" style="width:140px;flex:none">
+          <option value="wird">Wird / Dhikr</option>
+          <option value="pray">Prayer</option>
+          <option value="habit">Habit</option>
+          <option value="daily">General daily</option>
+        </select>
+        <input class="inp" id="recInp" placeholder="e.g. Read Quran, Fajr prayer..." onkeydown="if(event.key==='Enter')addRecurring()">
+        <button class="addbtn" onclick="addRecurring()">+ Add</button>
+      </div>
+      <div id="recSetupList"></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Weekly completion tracker</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Columns = days of the week (Sat → Fri) · Click a square to mark done</div>
+      <div style="display:flex;margin-bottom:8px">
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:4px" id="htHdr"></div>
+        <div style="width:24px"></div>
+      </div>
+      <div id="habitTrackGrid"></div>
+      <div style="position:relative;width:100%;height:170px;margin-top:18px"><canvas id="habitChartCvs"></canvas></div>
+    </div>
+  </div>
+
+  <!-- WEEKLY -->
+  <div id="sec-weekly" style="display:none">
+    <div class="card">
+      <div class="ctitle">Weekly study hours</div>
+      <div id="studyLogRows"></div>
+      <div style="position:relative;width:100%;height:200px;margin-top:18px"><canvas id="weekChart"></canvas></div>
+      <div style="display:flex;margin-top:14px;gap:10px;flex-wrap:wrap">
+        <div class="met" style="flex:1;border:none"><div class="met-l">Week Total</div><div class="met-v" id="weekTotal">0h</div></div>
+        <div class="met" style="flex:1;border:none"><div class="met-l">Daily Average</div><div class="met-v" id="weekAvg">0h</div></div>
+        <div class="met" style="flex:1;border:none"><div class="met-l">Best Day</div><div class="met-v" id="weekBest" style="font-size:15px">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBJECTS -->
+  <div id="sec-subjects" style="display:none">
+    <div class="card">
+      <div class="ctitle">Subjects & comprehensive exams</div>
+      <div id="subjList"></div>
+    </div>
+  </div>
+
+  <!-- BOOK MAPS -->
+  <div id="sec-mindmap" style="display:none">
+    <div class="card">
+      <div class="ctitle">Book mind maps
+        <div style="display:flex;gap:7px">
+          <input class="inp" id="newBookInp" placeholder="Book or subject name..." style="width:190px" onkeydown="if(event.key==='Enter')addBook()">
+          <button class="addbtn" onclick="addBook()">+ Book</button>
+        </div>
+      </div>
+      <div id="bookList"></div>
+    </div>
+  </div>
+
+  <!-- ARCHIVE -->
+  <div id="sec-archive" style="display:none">
+    <div class="card">
+      <div class="ctitle">Daily archive — auto-saved <span class="badge bc" id="archBadge">0 days</span></div>
+      <div id="archiveEl" class="empty-state">No days saved yet. Click "Save Today" or days save automatically at midnight.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const DAY_SHORT=['Sat','Sun','Mon','Tue','Wed','Thu','Fri'];
+const DAY_FULL=['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'];
+const SUBJECTS=[
+  {name:'English',color:'#534AB7',bg:'#EEEDFE',exams:[],target:3},
+  {name:'Arabic',color:'#1D9E75',bg:'#E1F5EE',exams:[],target:3},
+  {name:'Chemistry',color:'#D85A30',bg:'#FAECE7',exams:[],target:4},
+  {name:'Physics',color:'#185FA5',bg:'#E6F1FB',exams:[],target:4},
+  {name:'Biology',color:'#3B6D11',bg:'#EAF3DE',exams:[],target:3},
+];
+const CAT_LABELS={wird:'Wird',pray:'Prayer',habit:'Habit',daily:'Daily',must:'Must'};
+
+let mustTasks=[],dailyTasks=[],recurring=[],weekHours=[0,0,0,0,0,0,0],archive=[],books=[];
+let timerSecs=0,timerRunning=false,timerInt=null,timerSessions=[],timerSessionStart=null;
+let weekChartInst=null,habitChartInst=null;
+
+const today=new Date();
+const todayIdx=(today.getDay()+1)%7;
+const todayStr=today.toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+function loadData(){
+  try{
+    const saved=localStorage.getItem('studyDash');
+    if(saved){
+      const d=JSON.parse(saved);
+      mustTasks=d.mustTasks||[];
+      dailyTasks=d.dailyTasks||[];
+      recurring=d.recurring||[];
+      weekHours=d.weekHours||[0,0,0,0,0,0,0];
+      archive=d.archive||[];
+      books=d.books||[];
+      if(d.subjects)d.subjects.forEach((s,i)=>{if(SUBJECTS[i]){SUBJECTS[i].exams=s.exams||[];SUBJECTS[i].target=s.target||SUBJECTS[i].target;}});
+      timerSecs=d.timerSecs||0;
+    }
+  }catch(e){}
+}
+
+function saveData(){
+  try{
+    localStorage.setItem('studyDash',JSON.stringify({mustTasks,dailyTasks,recurring,weekHours,archive,books,subjects:SUBJECTS.map(s=>({exams:s.exams,target:s.target})),timerSecs,focus:document.getElementById('focusInp').value,q1:document.getElementById('q1').value,q2:document.getElementById('q2').value,q3:document.getElementById('q3').value}));
+  }catch(e){}
+}
+
+function init(){
+  loadData();
+  document.getElementById('dateSub').textContent=todayStr;
+  const saved=localStorage.getItem('studyDash');
+  if(saved){
+    const d=JSON.parse(saved);
+    if(d.focus)document.getElementById('focusInp').value=d.focus;
+    if(d.q1)document.getElementById('q1').value=d.q1;
+    if(d.q2)document.getElementById('q2').value=d.q2;
+    if(d.q3)document.getElementById('q3').value=d.q3;
+    if(d.timerSecs)document.getElementById('timerDisp').textContent=fmtT(d.timerSecs);
+  }
+  injectRecurring();
+  renderTasks();renderRecurringSetup();renderHabitTrack();
+  renderSubjects();renderStudyLog();renderBooks();renderArchive();updateExamMetric();
+  setTimeout(()=>{initWeekChart();initHabitChart();},160);
+  setInterval(()=>{const n=new Date();if(n.getHours()===0&&n.getMinutes()===0)autoSave();},60000);
+  ['focusInp','q1','q2','q3'].forEach(id=>document.getElementById(id).addEventListener('input',saveData));
+}
+
+function injectRecurring(){
+  const todayKey=today.toDateString();
+  const lastKey=localStorage.getItem('lastDayKey');
+  if(lastKey!==todayKey){
+    dailyTasks=dailyTasks.filter(t=>!t.rid);
+    recurring.forEach(r=>{dailyTasks.push({text:r.text,done:false,rid:r.id,cat:r.cat});});
+    localStorage.setItem('lastDayKey',todayKey);
+  } else {
+    recurring.forEach(r=>{if(!dailyTasks.some(t=>t.rid===r.id))dailyTasks.push({text:r.text,done:false,rid:r.id,cat:r.cat});});
+  }
+  const n=document.getElementById('autoTasksNotice');
+  n.textContent=recurring.length>0?recurring.length+' recurring routine'+(recurring.length>1?'s':'')+' added to your tasks automatically.':'Go to "Daily Routines" to set up tasks that appear here automatically every day.';
+}
+
+function showSec(id,btn){
+  ['today','recurring','weekly','subjects','mindmap','archive'].forEach(s=>document.getElementById('sec-'+s).style.display=s===id?'block':'none');
+  document.querySelectorAll('.snav').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  if(id==='weekly'&&weekChartInst){weekChartInst.data.datasets[0].data=[...weekHours];weekChartInst.update();}
+  if(id==='recurring'){renderHabitTrack();if(habitChartInst)updateHabitChart();}
+}
+
+function fmtT(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;}
+
+function toggleTimer(){
+  if(!timerRunning){
+    timerRunning=true;timerSessionStart=Date.now();
+    document.getElementById('tStartBtn').textContent='Pause';document.getElementById('tStartBtn').className='btn';
+    document.getElementById('timerStat').textContent='Studying...';
+    timerInt=setInterval(()=>{timerSecs++;document.getElementById('timerDisp').textContent=fmtT(timerSecs);updateStudyMetric();saveData();},1000);
+  } else {
+    timerRunning=false;clearInterval(timerInt);
+    if(timerSessionStart){const d=Math.round((Date.now()-timerSessionStart)/60000);if(d>0)timerSessions.push(d);timerSessionStart=null;}
+    document.getElementById('tStartBtn').textContent='Resume';document.getElementById('tStartBtn').className='btn pri';
+    document.getElementById('timerStat').textContent='Paused';
+    document.getElementById('sessBadge').textContent='Session '+(timerSessions.length+1);
+    renderSessionDots();
+    weekHours[todayIdx]=parseFloat((timerSecs/3600).toFixed(1));
+    renderStudyLog();if(weekChartInst){weekChartInst.data.datasets[0].data=[...weekHours];weekChartInst.update();}
+    updateWeekStats();saveData();
+  }
+}
+function resetTimer(){
+  if(timerRunning){clearInterval(timerInt);timerRunning=false;if(timerSessionStart){const d=Math.round((Date.now()-timerSessionStart)/60000);if(d>0)timerSessions.push(d);timerSessionStart=null;}}
+  timerSecs=0;document.getElementById('timerDisp').textContent='00:00:00';
+  document.getElementById('tStartBtn').textContent='Start';document.getElementById('tStartBtn').className='btn pri';
+  document.getElementById('timerStat').textContent='Ready to start';
+  document.getElementById('sessBadge').textContent='Session '+(timerSessions.length+1);
+  renderSessionDots();updateStudyMetric();saveData();
+}
+function updateStudyMetric(){const h=Math.floor(timerSecs/3600),m=Math.floor((timerSecs%3600)/60);document.getElementById('m-study').textContent=h+'h '+m+'m';}
+function renderSessionDots(){const c=document.getElementById('sessDotsEl');c.innerHTML='';timerSessions.forEach((d,i)=>{const el=document.createElement('div');el.className='sdot';el.textContent='S'+(i+1)+': '+d+'min';c.appendChild(el);});}
+
+function addTask(type){
+  const inp=document.getElementById(type==='must'?'mustInp':'taskInp');
+  const val=inp.value.trim();if(!val)return;
+  (type==='must'?mustTasks:dailyTasks).push({text:val,done:false,rid:null,cat:type==='must'?'must':'daily'});
+  inp.value='';renderTasks();saveData();
+}
+function renderTasks(){
+  renderList('mustList',mustTasks);renderList('taskList',dailyTasks);
+  document.getElementById('mustBadge').textContent=mustTasks.filter(t=>!t.done).length+' left';
+  document.getElementById('taskBadge').textContent=dailyTasks.filter(t=>!t.done).length+' left';
+  const tot=mustTasks.length+dailyTasks.length,dn=mustTasks.filter(t=>t.done).length+dailyTasks.filter(t=>t.done).length;
+  document.getElementById('m-tasks').textContent=dn+'/'+tot;
+}
+function renderList(id,arr){
+  const el=document.getElementById(id);el.innerHTML='';
+  if(!arr.length){el.innerHTML='<div class="empty-state" style="padding:8px 0">No tasks yet</div>';return;}
+  arr.forEach((t,i)=>{
+    const row=document.createElement('div');row.className='titem';
+    const cb=document.createElement('div');cb.className='tcb'+(t.done?' ck':'');
+    cb.onclick=()=>{arr[i].done=!arr[i].done;if(arr[i].rid){const r=recurring.find(r=>r.id===arr[i].rid);if(r){r.weekDone=r.weekDone||Array(7).fill(false);r.weekDone[todayIdx]=arr[i].done;}if(habitChartInst)updateHabitChart();}renderTasks();saveData();};
+    const tx=document.createElement('span');tx.className='ttxt'+(t.done?' dn':'');tx.textContent=t.text;tx.onclick=cb.onclick;
+    row.append(cb,tx);
+    if(t.cat&&t.cat!=='daily'){const tg=document.createElement('span');tg.className='tag tag-'+t.cat;tg.textContent=CAT_LABELS[t.cat]||t.cat;row.appendChild(tg);}
+    if(!t.rid){const dl=document.createElement('button');dl.className='tdel';dl.textContent='×';dl.onclick=()=>{arr.splice(i,1);renderTasks();saveData();};row.appendChild(dl);}
+    el.appendChild(row);
+  });
+}
+
+function addRecurring(){
+  const inp=document.getElementById('recInp');const val=inp.value.trim();if(!val)return;
+  const cat=document.getElementById('recCatSel').value;const id='r_'+Date.now();
+  recurring.push({id,text:val,cat,weekDone:Array(7).fill(false)});inp.value='';
+  dailyTasks.push({text:val,done:false,rid:id,cat});
+  renderRecurringSetup();renderHabitTrack();renderTasks();if(habitChartInst)updateHabitChart();
+  const n=document.getElementById('autoTasksNotice');n.textContent=recurring.length+' recurring routine'+(recurring.length>1?'s':'')+' added to your tasks automatically.';
+  saveData();
+}
+function renderRecurringSetup(){
+  const el=document.getElementById('recSetupList');el.innerHTML='';
+  document.getElementById('recCount').textContent=recurring.length+' item'+(recurring.length!==1?'s':'');
+  if(!recurring.length){el.innerHTML='<div class="empty-state" style="padding:10px 0">No routines yet</div>';return;}
+  recurring.forEach((r,i)=>{
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:0.5px solid var(--border)';
+    const tg=document.createElement('span');tg.className='tag tag-'+r.cat;tg.textContent=CAT_LABELS[r.cat];
+    const nm=document.createElement('span');nm.style.cssText='flex:1;font-size:13px;color:var(--text)';nm.textContent=r.text;
+    const dl=document.createElement('button');dl.className='tdel';dl.textContent='×';
+    dl.onclick=()=>{const dtIdx=dailyTasks.findIndex(t=>t.rid===r.id);if(dtIdx>-1)dailyTasks.splice(dtIdx,1);recurring.splice(i,1);renderRecurringSetup();renderHabitTrack();renderTasks();if(habitChartInst)updateHabitChart();saveData();};
+    row.append(tg,nm,dl);el.appendChild(row);
+  });
+}
+
+function renderHabitTrack(){
+  const hdr=document.getElementById('htHdr');hdr.innerHTML='';
+  DAY_SHORT.forEach(d=>{const s=document.createElement('div');s.style.cssText='width:24px;text-align:center;font-size:11px;color:var(--text3)';s.textContent=d;hdr.appendChild(s);});
+  const grid=document.getElementById('habitTrackGrid');grid.innerHTML='';
+  if(!recurring.length){grid.innerHTML='<div class="empty-state" style="padding:10px 0">Add routines first</div>';return;}
+  recurring.forEach((r,ri)=>{
+    r.weekDone=r.weekDone||Array(7).fill(false);
+    const row=document.createElement('div');row.className='habit-track-row';
+    const nm=document.createElement('div');nm.className='ht-name';nm.textContent=r.text;
+    const dv=document.createElement('div');dv.className='ht-days';
+    r.weekDone.forEach((on,di)=>{
+      const d=document.createElement('div');d.className='ht-d'+(on?' on':'');
+      d.onclick=()=>{recurring[ri].weekDone[di]=!recurring[ri].weekDone[di];if(di===todayIdx){const dtIdx=dailyTasks.findIndex(t=>t.rid===r.id);if(dtIdx>-1){dailyTasks[dtIdx].done=recurring[ri].weekDone[di];renderTasks();}}renderHabitTrack();if(habitChartInst)updateHabitChart();saveData();};
+      dv.appendChild(d);
+    });
+    row.append(nm,dv);grid.appendChild(row);
+  });
+}
+function initHabitChart(){
+  const ctx=document.getElementById('habitChartCvs');if(!ctx)return;
+  habitChartInst=new Chart(ctx.getContext('2d'),{type:'bar',data:{labels:DAY_SHORT,datasets:[{data:getHabitPcts(),backgroundColor:DAY_SHORT.map((_,i)=>i===todayIdx?'#1D9E75':'#9FE1CB'),borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:11},color:'#888780'}},y:{grid:{color:'rgba(136,135,128,0.1)'},ticks:{font:{size:10},color:'#888780',callback:v=>v+'%'},min:0,max:100}}}});
+}
+function getHabitPcts(){return!recurring.length?Array(7).fill(0):DAY_SHORT.map((_,di)=>Math.round(recurring.filter(r=>(r.weekDone||[])[di]).length/recurring.length*100));}
+function updateHabitChart(){if(!habitChartInst)return;habitChartInst.data.datasets[0].data=getHabitPcts();habitChartInst.update();}
+
+function renderStudyLog(){
+  const el=document.getElementById('studyLogRows');el.innerHTML='';const max=Math.max(...weekHours,1);
+  DAY_FULL.forEach((day,i)=>{
+    const row=document.createElement('div');row.className='slog-row';
+    const lbl=document.createElement('div');lbl.className='slog-day';lbl.style.fontWeight=i===todayIdx?'600':'400';lbl.textContent=i===todayIdx?'Today':DAY_SHORT[i];
+    const inp=document.createElement('input');inp.className='slog-inp';inp.type='number';inp.min=0;inp.max=24;inp.step=0.5;inp.value=weekHours[i]||'';inp.placeholder='0';
+    inp.oninput=()=>{weekHours[i]=parseFloat(inp.value)||0;refreshBars();updateWeekStats();if(weekChartInst){weekChartInst.data.datasets[0].data=[...weekHours];weekChartInst.update();}saveData();};
+    const unit=document.createElement('span');unit.style.cssText='font-size:12px;color:var(--text3)';unit.textContent='h';
+    const bw=document.createElement('div');bw.className='slog-bw';const bf=document.createElement('div');bf.className='slog-bf';bf.id='sbf'+i;bf.style.width=Math.round((weekHours[i]/max)*100)+'%';if(i===todayIdx)bf.style.background='#1D9E75';bw.appendChild(bf);
+    const vl=document.createElement('div');vl.className='slog-val';vl.id='svl'+i;vl.textContent=weekHours[i]+'h';
+    row.append(lbl,inp,unit,bw,vl);el.appendChild(row);
+  });
+  updateWeekStats();
+}
+function refreshBars(){const max=Math.max(...weekHours,1);weekHours.forEach((h,i)=>{const b=document.getElementById('sbf'+i),v=document.getElementById('svl'+i);if(b)b.style.width=Math.round((h/max)*100)+'%';if(v)v.textContent=h+'h';});document.getElementById('m-week').textContent=parseFloat(weekHours.reduce((a,b)=>a+b,0).toFixed(1))+'h';}
+function updateWeekStats(){const tot=weekHours.reduce((a,b)=>a+b,0);document.getElementById('m-week').textContent=parseFloat(tot.toFixed(1))+'h';document.getElementById('weekTotal').textContent=parseFloat(tot.toFixed(1))+'h';const nz=weekHours.filter(h=>h>0);document.getElementById('weekAvg').textContent=nz.length?parseFloat((tot/nz.length).toFixed(1))+'h':'0h';const mx=Math.max(...weekHours);const bi=weekHours.indexOf(mx);document.getElementById('weekBest').textContent=mx>0?DAY_SHORT[bi]+' '+mx+'h':'—';}
+function initWeekChart(){const ctx=document.getElementById('weekChart');if(!ctx)return;weekChartInst=new Chart(ctx.getContext('2d'),{type:'bar',data:{labels:DAY_SHORT,datasets:[{data:[...weekHours],backgroundColor:DAY_SHORT.map((_,i)=>i===todayIdx?'#534AB7':'#AFA9EC'),borderRadius:6,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:11},color:'#888780'}},y:{grid:{color:'rgba(136,135,128,0.1)'},ticks:{font:{size:10},color:'#888780',callback:v=>v+'h'},min:0,suggestedMax:8}}}});}
+
+function renderSubjects(){
+  const el=document.getElementById('subjList');el.innerHTML='';
+  SUBJECTS.forEach((s,si)=>{
+    const box=document.createElement('div');box.className='subj-card';
+    const hdr=document.createElement('div');hdr.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:7px';
+    const nm=document.createElement('div');nm.style.cssText='font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px';
+    const dot=document.createElement('span');dot.style.cssText=`display:inline-block;width:11px;height:11px;border-radius:50%;background:${s.color}`;
+    nm.append(dot,document.createTextNode(s.name));
+    const dn=s.exams.filter(Boolean).length;
+    const info=document.createElement('div');info.style.cssText='display:flex;align-items:center;gap:7px';
+    const badge=document.createElement('span');badge.className='badge';badge.style.cssText=`background:${s.bg};color:${s.color}`;badge.textContent=dn+'/'+s.target+' exams';
+    const addBtn=document.createElement('button');addBtn.className='btn sm';addBtn.textContent='+ slot';
+    addBtn.onclick=()=>{SUBJECTS[si].exams.push(false);SUBJECTS[si].target=SUBJECTS[si].exams.length;renderSubjects();updateExamMetric();saveData();};
+    info.append(badge,addBtn);hdr.append(nm,info);
+    const erow=document.createElement('div');erow.style.cssText='display:flex;align-items:center;gap:6px;flex-wrap:wrap';
+    const elbl=document.createElement('span');elbl.style.cssText='font-size:12px;color:var(--text3)';elbl.textContent='Exams:';erow.appendChild(elbl);
+    if(!s.exams.length){const nt=document.createElement('span');nt.style.cssText='font-size:12px;color:var(--text3)';nt.textContent='Click "+ slot" to add';erow.appendChild(nt);}
+    s.exams.forEach((done,ei)=>{const d=document.createElement('div');d.className='exam-dot'+(done?' done-e':'');d.title='Exam '+(ei+1);d.onclick=()=>{SUBJECTS[si].exams[ei]=!SUBJECTS[si].exams[ei];renderSubjects();updateExamMetric();saveData();};erow.appendChild(d);});
+    const pb=document.createElement('div');pb.className='prog-bar';const pf=document.createElement('div');pf.className='prog-fill';pf.style.cssText=`width:${s.target?Math.round(dn/s.target*100):0}%;background:${s.color}`;pb.appendChild(pf);
+    box.append(hdr,erow,pb);el.appendChild(box);
+  });
+  updateExamMetric();
+}
+function updateExamMetric(){const tot=SUBJECTS.reduce((a,s)=>a+s.target,0),dn=SUBJECTS.reduce((a,s)=>a+s.exams.filter(Boolean).length,0);document.getElementById('m-exams').textContent=dn+'/'+tot;}
+
+function addBook(){const inp=document.getElementById('newBookInp');const val=inp.value.trim();if(!val)return;books.push({title:val,chapters:[]});inp.value='';renderBooks();saveData();}
+function renderBooks(){
+  const el=document.getElementById('bookList');el.innerHTML='';
+  if(!books.length){el.innerHTML='<div class="empty-state">No books yet — add one above</div>';return;}
+  books.forEach((book,bi)=>{
+    const box=document.createElement('div');box.className='mm-book';
+    const hdr=document.createElement('div');hdr.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:7px';
+    const sp=document.createElement('span');sp.style.cssText='font-size:14px;font-weight:600;color:var(--text)';sp.textContent=book.title;
+    const dn=book.chapters.filter(c=>c.done).length;
+    const bg=document.createElement('div');bg.style.cssText='display:flex;gap:6px;align-items:center';
+    const bdg=document.createElement('span');bdg.className='badge bp';bdg.textContent=dn+'/'+book.chapters.length+' chapters';
+    const addCh=document.createElement('button');addCh.className='btn sm';addCh.textContent='+ Chapter';
+    addCh.onclick=()=>{const name=prompt('Chapter name:');if(!name)return;const hasExam=confirm('Has comprehensive exam?');const hasQ=confirm('Has chapter questions?');books[bi].chapters.push({name,done:false,hasExam,hasQ,note:''});renderBooks();saveData();};
+    const dlb=document.createElement('button');dlb.className='btn sm dng';dlb.textContent='Delete';dlb.onclick=()=>{if(confirm('Delete this book?')){books.splice(bi,1);renderBooks();saveData();}};
+    bg.append(bdg,addCh,dlb);hdr.append(sp,bg);box.appendChild(hdr);
+    if(book.chapters.length){
+      const pb=document.createElement('div');pb.className='prog-bar';pb.style.marginBottom='10px';const pf=document.createElement('div');pf.className='prog-fill';pf.style.cssText='background:#534AB7;width:'+Math.round(dn/book.chapters.length*100)+'%';pb.appendChild(pf);box.appendChild(pb);
+      book.chapters.forEach((ch,ci)=>{
+        const row=document.createElement('div');row.className='mm-chapter';
+        const cb=document.createElement('div');cb.className='mm-cb'+(ch.done?' ck':'');cb.onclick=()=>{books[bi].chapters[ci].done=!books[bi].chapters[ci].done;renderBooks();saveData();};
+        const info=document.createElement('div');info.style.cssText='flex:1;min-width:0';
+        const nm=document.createElement('div');nm.style.cssText='font-size:13px;font-weight:600;color:var(--text)'+(ch.done?';text-decoration:line-through;color:var(--text3)':'');nm.textContent=ch.name;
+        const ni=document.createElement('input');ni.className='inp';ni.style.cssText='font-size:12px;padding:5px 9px;margin-top:5px';ni.placeholder='Notes...';ni.value=ch.note||'';ni.oninput=()=>{books[bi].chapters[ci].note=ni.value;saveData();};
+        const tags=document.createElement('div');tags.style.cssText='display:flex;gap:4px;flex-wrap:wrap;margin-top:5px';
+        if(ch.hasExam){const t=document.createElement('span');t.className='mm-tag mm-tag-exam';t.textContent='Comprehensive exam';tags.appendChild(t);}
+        if(ch.hasQ){const t=document.createElement('span');t.className='mm-tag mm-tag-q';t.textContent='Chapter questions';tags.appendChild(t);}
+        if(ch.done){const t=document.createElement('span');t.className='mm-tag mm-tag-done';t.textContent='Done';tags.appendChild(t);}
+        const dl=document.createElement('button');dl.className='tdel';dl.textContent='×';dl.onclick=()=>{books[bi].chapters.splice(ci,1);renderBooks();saveData();};
+        info.append(nm,ni,tags);row.append(cb,info,dl);box.appendChild(row);
+      });
+    } else {const empty=document.createElement('div');empty.style.cssText='font-size:12px;color:var(--text3);padding:4px 0';empty.textContent='No chapters yet — click "+ Chapter"';box.appendChild(empty);}
+    el.appendChild(box);
+  });
+}
+
+function autoSave(){
+  const key=today.toDateString();const ex=archive.findIndex(a=>a.key===key);
+  const allTasks=[...mustTasks.map(t=>({...t,type:'must'})),...dailyTasks.map(t=>({...t,type:t.cat||'daily'}))];
+  const h=Math.floor(timerSecs/3600),m=Math.floor((timerSecs%3600)/60);
+  const entry={key,display:today.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}),tasks:allTasks.map(t=>({text:t.text,done:t.done,type:t.type})),studyH:weekHours[todayIdx],studyTimer:h+'h '+m+'m',focus:document.getElementById('focusInp').value.trim(),win:document.getElementById('q1').value.trim(),improve:document.getElementById('q2').value.trim(),tomorrow:document.getElementById('q3').value.trim()};
+  if(ex>=0)archive[ex]=entry;else archive.unshift(entry);
+  renderArchive();saveData();
+}
+function saveToday(){autoSave();const b=event.target;const o=b.textContent;b.textContent='Saved!';setTimeout(()=>b.textContent=o,2000);}
+
+function renderArchive(){
+  const el=document.getElementById('archiveEl');
+  document.getElementById('archBadge').textContent=archive.length+' day'+(archive.length!==1?'s':'');
+  if(!archive.length){el.innerHTML='<div class="empty-state">No days saved yet.</div>';return;}
+  el.innerHTML='';
+  archive.forEach(day=>{
+    const box=document.createElement('div');box.className='arch-item';
+    const dn=day.tasks.filter(t=>t.done).length,tot=day.tasks.length,pct=tot?Math.round(dn/tot*100):0;
+    const hdr=document.createElement('div');hdr.className='arch-date';
+    hdr.innerHTML=`<span style="font-weight:600;color:var(--text)">${day.display}</span><span style="display:flex;gap:12px;flex-wrap:wrap"><span>Study: ${day.studyH||0}h</span><span>Timer: ${day.studyTimer}</span><span style="font-weight:600;color:${pct>=70?'#1D9E75':'#BA7517'}">${pct}% done</span></span>`;
+    box.appendChild(hdr);
+    if(day.focus){const f=document.createElement('div');f.style.cssText='font-size:12px;color:var(--text2);margin-bottom:7px';f.textContent='Focus: '+day.focus;box.appendChild(f);}
+    day.tasks.forEach(t=>{
+      const r=document.createElement('div');r.className='arch-task'+(t.done?' dn':'');
+      const dot=document.createElement('div');dot.className='arch-dot '+(t.done?'y':'n');
+      const sp=document.createElement('span');sp.textContent=t.text;
+      const tg=document.createElement('span');tg.className='tag tag-'+(t.type==='must'?'must':t.type==='wird'?'wird':t.type==='pray'?'pray':'habit');tg.style.marginLeft='5px';tg.textContent=CAT_LABELS[t.type]||t.type;
+      r.append(dot,sp,tg);box.appendChild(r);
+    });
+    if(day.win||day.improve||day.tomorrow){
+      const refl=document.createElement('div');refl.style.cssText='margin-top:9px;padding-top:8px;border-top:0.5px solid var(--border);font-size:12px;color:var(--text2);display:flex;flex-direction:column;gap:3px';
+      if(day.win)refl.innerHTML+=`<span>Win: ${day.win}</span>`;
+      if(day.improve)refl.innerHTML+=`<span>Improve: ${day.improve}</span>`;
+      if(day.tomorrow)refl.innerHTML+=`<span>Tomorrow: ${day.tomorrow}</span>`;
+      box.appendChild(refl);
+    }
+    el.appendChild(box);
+  });
+}
+
+function exportNotion(){
+  const h=Math.floor(timerSecs/3600),m=Math.floor((timerSecs%3600)/60);
+  let md=`# My Study Dashboard — ${todayStr}\n\n`;
+  md+=`## Summary\n- Study timer: ${h}h ${m}m\n- Week total: ${weekHours.reduce((a,b)=>a+b,0).toFixed(1)}h\n- Focus: ${document.getElementById('focusInp').value||'—'}\n\n`;
+  if(mustTasks.length){md+=`## Must-Do\n`;mustTasks.forEach(t=>md+=`- [${t.done?'x':' '}] ${t.text}\n`);md+='\n';}
+  if(dailyTasks.length){md+=`## Today's Tasks\n`;dailyTasks.forEach(t=>md+=`- [${t.done?'x':' '}] ${t.text}${t.rid?' *(routine)*':''}\n`);md+='\n';}
+  if(recurring.length){md+=`## Daily Routines\n`;recurring.forEach(r=>{const dn=(r.weekDone||[]).filter(Boolean).length;md+=`- ${r.text} [${CAT_LABELS[r.cat]}] — ${dn}/7 this week\n`;});md+='\n';}
+  md+=`## Subjects & Exams\n`;SUBJECTS.forEach(s=>{const dn=s.exams.filter(Boolean).length;md+=`- **${s.name}**: ${dn}/${s.target} exams done\n`;});md+='\n';
+  md+=`## Weekly Hours\n`;DAY_SHORT.forEach((d,i)=>md+=`- ${d}: ${weekHours[i]}h\n`);
+  navigator.clipboard.writeText(md).then(()=>{const b=event.target;const o=b.textContent;b.textContent='Copied!';setTimeout(()=>b.textContent=o,2200);}).catch(()=>alert(md));
+}
+
+init();
+</script>
+</body>
+</html>
